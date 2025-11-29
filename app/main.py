@@ -10,6 +10,7 @@ from starlette.responses import JSONResponse
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.utils.model_loader import model_loader
+from starlette.middleware.cors import CORSMiddleware
 
 from app.api.routes import predict
 
@@ -24,6 +25,7 @@ async def lifespan(app:FastAPI):
     model_loader.load_models()
     yield
     logging.warn("Shutting down application")
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_VERSION}/openapi.json",
@@ -32,6 +34,11 @@ app = FastAPI(
     contact={"name": "Aham Kingsley", "email": "kingsleyaham6@gmail.com"},
     lifespan=lifespan
 )
+
+# set up CORS
+if settings.CORS_ORIGINS:
+    app.add_middleware(CORSMiddleware, allow_origins=[str(origin) for origin in settings.CORS_ORIGINS],
+                       allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 app.include_router(predict.router, prefix="/predict", tags=["Disease Predictions"])
 
